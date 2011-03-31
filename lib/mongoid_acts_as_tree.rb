@@ -206,8 +206,9 @@ module Mongoid
 				end
 
 				def build(attributes)
-          klass = attributes.delete(:class) || @parent.klass
-          child = klass.new(attributes)
+          tree_class = attributes.delete(:class) || @parent.tree_class
+          tree_class = tree_class.constantize if tree_class.is_a?(String)
+          child = tree_class.new(attributes)
 					self.push child
 					child
 				end
@@ -221,7 +222,7 @@ module Mongoid
 				def delete(object_or_id)
 					object = case object_or_id
 						when String, BSON::ObjectId
-							@parent.klass.find object_or_id
+							@parent.tree_class.find object_or_id
 						else
 							object_or_id
 					end
@@ -244,7 +245,7 @@ module Mongoid
 				private
 
 				def find_children_for_owner
-					@parent.klass.where(@parent.parent_id_field => @parent.id).
+					@parent.tree_class.where(@parent.parent_id_field => @parent.id).
 						order_by @parent.tree_order
 				end
 
@@ -267,7 +268,7 @@ module Mongoid
 					acts_as_tree_options[:order] or []
 				end
 
-				def klass
+				def tree_class
 					acts_as_tree_options[:class]
 				end
 			end
